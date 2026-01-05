@@ -20,6 +20,8 @@ key id           : UUID;
       state        : String;
       parentGuid   : String; 
       level        : Integer;
+      betaEnabled  : Boolean;
+      displayName  : String;
 }
 
 entity Users {
