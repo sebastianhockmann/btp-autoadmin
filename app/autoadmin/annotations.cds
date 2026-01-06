@@ -1,17 +1,14 @@
 using btpManagementService as service from '../../srv/btp-service';
 
-/** -----------------------------
- *  Directories: List + Object Page
- *  ----------------------------- */
 annotate service.Directories with @(
   UI.LineItem : [
     {
       $Type  : 'UI.DataFieldForAction',
-      Action : 'btpManagementService.RefreshStructure',
+      Action : 'RefreshStructure',
       Label  : 'Refresh Structure'
     },
-    { $Type : 'UI.DataField', Label : 'Name', Value : name },
-    { $Type : 'UI.DataField', Label : 'GUID', Value : guid },
+    { $Type : 'UI.DataField', Label : 'Name',        Value : name },
+    { $Type : 'UI.DataField', Label : 'GUID',        Value : guid },
     { $Type : 'UI.DataField', Label : 'Parent GUID', Value : parentGuid }
   ],
 
@@ -26,29 +23,74 @@ annotate service.Directories with @(
       $Type  : 'UI.ReferenceFacet',
       ID     : 'DirectorySubaccounts',
       Label  : 'Subaccounts',
-      Target : 'subaccounts/@UI.LineItem'     
+      Target : 'subaccounts/@UI.LineItem#InDirectoryFacet'
     }
   ],
 
   UI.FieldGroup #DirGeneral : {
     $Type : 'UI.FieldGroupType',
     Data : [
-      { $Type : 'UI.DataField', Label : 'GUID', Value : guid },
-      { $Type : 'UI.DataField', Label : 'Name', Value : name },
+      { $Type : 'UI.DataField', Label : 'GUID',        Value : guid },
+      { $Type : 'UI.DataField', Label : 'Name',        Value : name },
       { $Type : 'UI.DataField', Label : 'Parent GUID', Value : parentGuid },
-      { $Type : 'UI.DataField', Label : 'Level', Value : level }
+      { $Type : 'UI.DataField', Label : 'Level',       Value : level }
     ]
   }
 );
 
-/** -----------------------------
- *  Subaccounts: Tabelle (für Facet + optional eigener List Report)
- *  ----------------------------- */
 annotate service.Subaccounts with @(
+
+  // normales LineItem (optional)
   UI.LineItem : [
-    { $Type : 'UI.DataField', Label : 'Name', Value : name },
+    { $Type : 'UI.DataField', Label : 'Name',   Value : name },
     { $Type : 'UI.DataField', Label : 'Region', Value : region },
-    { $Type : 'UI.DataField', Label : 'State', Value : state }
+    { $Type : 'UI.DataField', Label : 'State',  Value : state }
   ],
-  UI.SelectionFields : [ name, region, state ]
+  UI.SelectionFields : [ name, region, state ],
+
+  // Facet-Tabelle im Directory (stabil, keine Navigation-Experimente)
+  UI.LineItem #InDirectoryFacet : [
+    { $Type : 'UI.DataField', Value : id, ![@UI.Hidden] : true },
+
+    // problem...
+
+    { $Type : 'UI.DataField', Label : 'Name',   Value : name },
+    { $Type : 'UI.DataField', Label : 'Region', Value : region },
+    { $Type : 'UI.DataField', Label : 'State',  Value : state }
+  ],
+
+  UI.Facets : [
+    {
+      $Type  : 'UI.ReferenceFacet',
+      ID     : 'SubaccountGeneral',
+      Label  : 'General Information',
+      Target : '@UI.FieldGroup#SubGeneral'
+    },
+    {
+      $Type  : 'UI.ReferenceFacet',
+      ID     : 'SubaccountDetails',
+      Label  : 'Details',
+      Target : '@UI.FieldGroup#SubDetails'
+    }
+  ],
+
+  UI.FieldGroup #SubGeneral : {
+    $Type : 'UI.FieldGroupType',
+    Data : [
+      { $Type : 'UI.DataField', Label : 'GUID',       Value : guid },
+      { $Type : 'UI.DataField', Label : 'Name',       Value : name },
+      { $Type : 'UI.DataField', Label : 'Region',     Value : region },
+      { $Type : 'UI.DataField', Label : 'State',      Value : state },
+      { $Type : 'UI.DataField', Label : 'Parent GUID',Value : parentGuid },
+      { $Type : 'UI.DataField', Label : 'Level',      Value : level }
+    ]
+  },
+
+  UI.FieldGroup #SubDetails : {
+    $Type : 'UI.FieldGroupType',
+    Data : [
+      { $Type : 'UI.DataField', Label : 'Owner Email', Value : details.ownerEmail },
+      { $Type : 'UI.DataField', Label : 'Created At',  Value : details.createdAt }
+    ]
+  }
 );

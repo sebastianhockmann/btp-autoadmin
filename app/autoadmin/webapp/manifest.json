@@ -44,6 +44,9 @@
   },
   "sap.ui5": {
     "flexEnabled": true,
+
+      
+
     "dependencies": {
       "minUI5Version": "1.143.2",
       "libs": {
@@ -80,73 +83,82 @@
     "resources": {
       "css": []
     },
-"routing": {
-  "config": {},
-  "routes": [
-    {
-      "pattern": ":?query:",
-      "name": "DirectoriesList",
-      "target": "DirectoriesList"
-    },
-    {
-      "pattern": "Directories({key}):?query:",
-      "name": "DirectoriesObjectPage",
-      "target": "DirectoriesObjectPage"
-    },
-    {
-      "pattern": "Subaccounts({key}):?query:",
-      "name": "SubaccountsObjectPage",
-      "target": "SubaccountsObjectPage"
-    }
-  ],
-  "targets": {
-    "DirectoriesList": {
-      "type": "Component",
-      "id": "DirectoriesList",
-      "name": "sap.fe.templates.ListReport",
-      "options": {
-        "settings": {
-          "contextPath": "/Directories",
-          "variantManagement": "Page",
-          "navigation": {
-            "Directories": {
-              "detail": { "route": "DirectoriesObjectPage" }
+    "routing": {
+      "config": {},
+      "routes": [
+        {
+          "pattern": ":?query:",
+          "name": "DirectoriesList",
+          "target": "DirectoriesList"
+        },
+        {
+          "pattern": "Directories({key}):?query:",
+          "name": "DirectoriesObjectPage",
+          "target": "DirectoriesObjectPage"
+        },
+        {
+          "pattern": "Subaccounts({key}):?query:",
+          "name": "SubaccountsObjectPage",
+          "target": "SubaccountsObjectPage"
+        },
+        {
+          "pattern": "Directories({key})/subaccounts({subKey}):?query:",
+          "name": "SubaccountsObjectPageFromDirectory",
+          "target": "SubaccountsObjectPage"
+        }
+      ],
+      "targets": {
+        "DirectoriesList": {
+          "type": "Component",
+          "id": "DirectoriesList",
+          "name": "sap.fe.templates.ListReport",
+          "options": {
+            "settings": {
+              "contextPath": "/Directories",
+              "variantManagement": "Page",
+              "navigation": {
+                "Directories": {
+                  "detail": { "route": "DirectoriesObjectPage" }
+                }
+              },
+              "controlConfiguration": {
+                "@com.sap.vocabularies.UI.v1.LineItem": {
+                  "tableSettings": { "type": "ResponsiveTable" }
+                }
+              }
             }
-          },
-          "controlConfiguration": {
-            "@com.sap.vocabularies.UI.v1.LineItem": {
-              "tableSettings": { "type": "ResponsiveTable" }
+          }
+        },
+        "DirectoriesObjectPage": {
+          "type": "Component",
+          "id": "DirectoriesObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "contextPath": "/Directories",
+              "navigation": {
+                "subaccounts": {
+                  "detail": { "route": "SubaccountsObjectPage" }
+                }
+              }
+            }
+          }
+        },
+        "SubaccountsObjectPage": {
+          "type": "Component",
+          "id": "SubaccountsObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "contextPath": "/Subaccounts"
             }
           }
         }
       }
-    },
-    "DirectoriesObjectPage": {
-      "type": "Component",
-      "id": "DirectoriesObjectPage",
-      "name": "sap.fe.templates.ObjectPage",
-      "options": {
-        "settings": {
-          "editableHeaderContent": false,
-          "contextPath": "/Directories"
-        }
-      }
-    },
-    "SubaccountsObjectPage": {
-      "type": "Component",
-      "id": "SubaccountsObjectPage",
-      "name": "sap.fe.templates.ObjectPage",
-      "options": {
-        "settings": {
-          "editableHeaderContent": false,
-          "contextPath": "/Subaccounts"
-        }
-      }
     }
-  }
-}},
-
-
+  },
   "sap.fiori": {
     "registrationIds": [],
     "archeType": "transactional"
