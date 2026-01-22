@@ -1,12 +1,14 @@
 const cds = require('@sap/cds');
 
 module.exports = cds.service.impl(async function () {
-  const { Directories, Subaccounts, SubaccountDetails } = this.entities;
+  const { Directories, Subaccounts, SubaccountDetails, DestinationMappings, Users } = this.entities;
+
+    
 
   console.log('📌 Service init - entities:', Object.keys(this.entities || {}));
   console.log('📌 Has SubaccountDetails entity?', !!SubaccountDetails);
 
-  // Remote Destination
+  // BTP Destination
   const btp = await cds.connect.to('BTP_MANAGEMENT_API');
   console.log('📌 Connected to remote service: BTP_MANAGEMENT_API');
 
@@ -88,6 +90,56 @@ module.exports = cds.service.impl(async function () {
     const id = req?.id || req?.headers?.['x-correlation-id'] || '';
     return id ? `[#${id}]` : '[READ]';
   }
+function _tryExtractIdFromRefWhere(fromRefArray) {
+  // fromRefArray looks like:
+  // [
+  //   { id:"btpManagementService.Directories", where:[ {ref:["id"]},"=",{val:"..."} ] },
+  //   { id:"subaccounts", where:[ {ref:["id"]},"=",{val:"..."} ] }
+  // ]
+  for (const r of fromRefArray || []) {
+    if (r?.id === 'subaccounts' && Array.isArray(r.where)) {
+      // find pattern: ref ["id"] = val "<uuid>"
+      for (let i = 0; i < r.where.length - 2; i++) {
+        const a = r.where[i], b = r.where[i + 1], c = r.where[i + 2];
+        if (a?.ref?.[0] === 'id' && b === '=' && c?.val) return c.val;
+      }
+    }
+  }
+  return null;
+}
+
+async function resolveSubaccountGuidFromReq(req, Subaccounts) {
+  // 1) direct
+  if (req?.data?.subaccountGuid) return req.data.subaccountGuid;
+  if (req?.data?.guid) return req.data.guid;
+
+  // 2) navigation params
+// bei /Directories(...)/subaccounts(...)/users gibt es 2 parents -> der letzte ist der Subaccount
+const parents = Array.isArray(req?.params) ? req.params : [];
+const parent = parents.length ? parents[parents.length - 1] : null;
+
+if (parent?.guid) return parent.guid;
+
+const parentId = parent?.id || parent?.ID;
+if (parentId) {
+  const row = await SELECT.one.from(Subaccounts).columns('guid').where({ id: parentId });
+  return row?.guid || null;
+}
+
+  // 3) navigation encoded in query (your case)
+  const from = req?.query?.SELECT?.from;
+  const refArr = from?.ref;
+  if (Array.isArray(refArr)) {
+    const subId = _tryExtractIdFromRefWhere(refArr);
+    if (subId) {
+      const row = await SELECT.one.from(Subaccounts).columns('guid').where({ id: subId });
+      return row?.guid || null;
+    }
+  }
+
+  return null;
+}
+
 
   // ---------------------------------------------------------
   // Helper: Fetch + UPSERT details
@@ -226,4 +278,55 @@ module.exports = cds.service.impl(async function () {
       console.log(`${p} result.id=`, result.id, 'result.guid=', result.guid);
     }
   });
+
+
+  // ---------------------------------------------------------
+  // READ Users (virtual) - destination lookup by subaccountGuid
+  // ---------------------------------------------------------
+  this.on('READ', Users, async (req) => {
+    const p = logReqPrefix(req);
+    console.log(`${p} READ Users`);
+
+    const subGuid = await resolveSubaccountGuidFromReq(req, Subaccounts);
+    console.log(`${p} req.data=`, req.data);
+    console.log(`${p} req.params=`, req.params);
+    console.log(`${p} req.query.from=`, JSON.stringify(req?.query?.SELECT?.from, null, 2));
+    
+    console.log(`${p} Users for subaccountGuid=`, subGuid);
+
+    if (!subGuid) {
+      console.log(`${p} (skip) no subaccountGuid in request context`);
+      return [];
+    }
+
+    // DestinationMapping aus DB holen
+    const tx = cds.transaction(req);
+    const mapping = await tx.run(
+      SELECT.one.from(DestinationMappings)
+        .columns('destinationName', 'active')
+        .where({ subaccountGuid: subGuid, active: true })
+    );
+
+    if (!mapping?.destinationName) {
+      console.log(`${p} ❌ No active DestinationMapping found for subaccountGuid=${subGuid}`);
+      return [];
+    }
+
+    console.log(`${p} ✅ Using destination: ${mapping.destinationName}`);
+
+    // TODO: hier kommt später der echte API call über die Destination hin
+    // für jetzt: Dummy-User, damit die Tabelle in der UI sichtbar wird
+    return [
+      {
+        id: `dummy-${subGuid}`,
+        subaccountGuid: subGuid,
+        firstName: 'Dummy',
+        lastName: 'User',
+        email: 'dummy@example.com',
+        origin: 'TEST'
+      }
+    ];
+  });
+
+
 });

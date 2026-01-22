@@ -27,11 +27,23 @@ entity Subaccounts {
 }
 
 entity SubaccountDetails {
-  key id           : UUID;
-      subaccountGuid : String;
-      fetchedAt    : Timestamp;
-      createdAt    : Timestamp;
-      ownerEmail   : String;
+  key id                : UUID;
+      subaccountGuid    : String;
+      fetchedAt         : Timestamp;
+      createdBy         : String;
+      createdDate       : String;
+      description       : String;
+      displayName       : String;
+      globalAccountID   : String;
+      ownerEmail        : String;
+      modifiedDate      : String;
+      region            : String;
+      state             : String;
+      stateMessage      : String;
+      subdomain         : String;
+      technicalName     : String;
+      usedForProduction : String;
+
 }
 
 entity Users {
@@ -39,4 +51,17 @@ entity Users {
       firstName : String;
       lastName  : String;
       email     : String;
+      origin    : String;   // 'IAS' | 'BTP' | 'CF'
 }
+
+
+// Configuration
+entity SubaccountConnections {
+  key subaccountGuid : String;          
+      destinationName: String;          
+      active         : Boolean default true;
+      note           : String;
+      updatedAt      : Timestamp;
+}
+
+

@@ -40,7 +40,6 @@ annotate service.Directories with @(
 
 annotate service.Subaccounts with @(
 
-  // normales LineItem (optional)
   UI.LineItem : [
     { $Type : 'UI.DataField', Label : 'Name',   Value : name },
     { $Type : 'UI.DataField', Label : 'Region', Value : region },
@@ -48,12 +47,9 @@ annotate service.Subaccounts with @(
   ],
   UI.SelectionFields : [ name, region, state ],
 
-  // Facet-Tabelle im Directory (stabil, keine Navigation-Experimente)
+  // Facet-Tabelle im Directory
   UI.LineItem #InDirectoryFacet : [
     { $Type : 'UI.DataField', Value : id, ![@UI.Hidden] : true },
-
-    // problem...
-
     { $Type : 'UI.DataField', Label : 'Name',   Value : name },
     { $Type : 'UI.DataField', Label : 'Region', Value : region },
     { $Type : 'UI.DataField', Label : 'State',  Value : state }
@@ -71,7 +67,17 @@ annotate service.Subaccounts with @(
       ID     : 'SubaccountDetails',
       Label  : 'Details',
       Target : '@UI.FieldGroup#SubDetails'
+    },
+    {
+      $Type  : 'UI.ReferenceFacet',
+      ID     : 'SubaccountUsers',
+      Label  : 'Users',
+      Target : 'users/@UI.LineItem'
     }
+
+
+
+
   ],
 
   UI.FieldGroup #SubGeneral : {
@@ -93,4 +99,13 @@ annotate service.Subaccounts with @(
       { $Type : 'UI.DataField', Label : 'Created At',  Value : details.createdAt }
     ]
   }
+);
+
+annotate service.Users with @(
+  UI.LineItem : [
+    { $Type : 'UI.DataField', Label : 'First Name', Value : firstName },
+    { $Type : 'UI.DataField', Label : 'Last Name',  Value : lastName  },
+    { $Type : 'UI.DataField', Label : 'E-Mail',     Value : email     },
+    { $Type : 'UI.DataField', Label : 'Origin',     Value : origin    }
+  ]
 );
