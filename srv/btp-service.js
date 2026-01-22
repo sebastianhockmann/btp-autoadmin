@@ -1,4 +1,7 @@
 const cds = require('@sap/cds');
+const { getDestination } = require('@sap-cloud-sdk/connectivity');
+const { executeHttpRequest } = require('@sap-cloud-sdk/http-client');
+
 
 module.exports = cds.service.impl(async function () {
   const { Directories, Subaccounts, SubaccountDetails, DestinationMappings, Users } = this.entities;
@@ -205,14 +208,7 @@ if (parentId) {
       fetchedAt: now
     };
 
-    // OPTION B: wenn dein schema.cds NUR createdAt + ownerEmail hat:
-    // const rowB = {
-    //   id: existing?.id || cds.utils.uuid(),
-    //   subaccountGuid: guid,
-    //   createdAt: d?.createdAt ? new Date(d.createdAt) : null,
-    //   ownerEmail: d?.ownerEmail ?? null
-    // };
-
+   
     // ✅ Wähle genau 1 Zeile:
     const row = rowA; // <- oder rowB
 
@@ -314,6 +310,52 @@ if (parentId) {
 
     console.log(`${p} ✅ Using destination: ${mapping.destinationName}`);
 
+    const destination = await getDestination({ destinationName: mapping.destinationName });
+  if (!destination) {
+    console.log(`${p} ❌ Destination not found in Destination Service: ${mapping.destinationName}`);
+    return [];
+  }
+
+  // 3) Paging aus OData übernehmen
+  const top = req.query?.SELECT?.limit?.rows?.val ?? 50;
+  const skip = req.query?.SELECT?.limit?.offset?.val ?? 0;
+
+  // 4) Identifier bestimmen (Beispiel: aus Details/Subdomain oder anderem Feld)
+  // -> Hier musst du entscheiden, was zur API passt:
+  //    Neo-Doku spricht von technical name, nicht GUID.
+  const sub = await tx.run(SELECT.one.from(Subaccounts).columns('guid','name').where({ guid: subGuid }));
+  const subaccountIdForApi = sub?.guid; // <-- ggf. ersetzen!
+
+  console.log(`${p} ℹ️ subaccountIdForApi=`, subaccountIdForApi);
+
+  // 5) Remote Call (Pfad hängt davon ab, wohin die Destination zeigt)
+  const res = await executeHttpRequest(destination, {
+    method: 'GET',
+      url: `/Users`
+    
+  });
+
+  /*
+  console.log('Authorization header:', authHeader);
+  console.log('HTTP status:', res.status);
+  console.log('Raw response:', res.data);
+  */
+
+  const users = Array.isArray(res.data) ? res.data : (res.data?.users ?? []);
+  console.log(`${p} ✅ Remote users count:`, users.length);
+
+  // 6) Auf deine Entity mappen
+  return users.slice(skip, skip + top).map(u => ({
+    id: u.id ?? u.userId ?? cds.utils.uuid(),
+    subaccountGuid: subGuid,
+    firstName: u.firstName ?? '',
+    lastName:  u.lastName ?? '',
+    email:     u.email ?? u.userName ?? '',
+    origin:    u.origin ?? ''
+  }));
+
+
+    /*
     // TODO: hier kommt später der echte API call über die Destination hin
     // für jetzt: Dummy-User, damit die Tabelle in der UI sichtbar wird
     return [
@@ -325,7 +367,11 @@ if (parentId) {
         email: 'dummy@example.com',
         origin: 'TEST'
       }
-    ];
+    ];*/
+
+
+
+    
   });
 
 
