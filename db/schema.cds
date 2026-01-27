@@ -55,6 +55,7 @@ entity Users {
 }
 
 
+
 // Configuration
 entity SubaccountConnections {
   key subaccountGuid : String;          

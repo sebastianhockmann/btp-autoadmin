@@ -1,5 +1,6 @@
 using {btp.structure as db} from '../db/schema';
 using {btp.config as cfg} from '../db/config';
+using {btp.cache as cache} from '../db/cache';
 
 service btpManagementService {
 
@@ -9,15 +10,9 @@ service btpManagementService {
     entity SubaccountDetails as projection on db.SubaccountDetails;
 
 
-    @cds.persistence.skip
-    entity Users {
-    key id            : String;
-        subaccountGuid : String(36);
-        firstName      : String;
-        lastName       : String;
-        email          : String;
-        origin         : String;
-  }
+    entity Users as projection on cache.CachedUsers;
+  
+
     
 
     //Konfiguration
@@ -32,4 +27,8 @@ extend projection btpManagementService.Subaccounts with {
     on users.subaccountGuid = $self.guid
 }
 
-
+// Navigation User -> Subaccount (für subaccount.name im UI)
+extend projection btpManagementService.Users with {
+  subaccount : Association to btpManagementService.Subaccounts
+    on subaccount.guid = $self.subaccountGuid
+};

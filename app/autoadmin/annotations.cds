@@ -106,6 +106,13 @@ annotate service.Users with @(
     { $Type : 'UI.DataField', Label : 'First Name', Value : firstName },
     { $Type : 'UI.DataField', Label : 'Last Name',  Value : lastName  },
     { $Type : 'UI.DataField', Label : 'E-Mail',     Value : email     },
-    { $Type : 'UI.DataField', Label : 'Origin',     Value : origin    }
-  ]
+    { $Type : 'UI.DataField', Label : 'Origin',     Value : origin    },
+    { $Type : 'UI.DataField', Label : 'Subaccount', Value : subaccount.name } // nur wenn Association ergänzt
+  ],
+
+  // globale Filterfelder
+  UI.SelectionFields : [ email, firstName, lastName, origin, subaccountGuid ],
+
+  // Suchfeld oben (Full text search)
+  Search.Searchable : true
 );
