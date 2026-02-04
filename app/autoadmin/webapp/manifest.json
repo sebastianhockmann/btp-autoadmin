@@ -112,7 +112,9 @@
         {
           "pattern": ":?query:",
           "name": "DirectoriesList",
-          "target": "DirectoriesList"
+          "target": [
+            "DirectoriesList"
+          ]
         },
         {
           "pattern": "Users:?query:",
@@ -122,12 +124,19 @@
         {
           "pattern": "Directories({key}):?query:",
           "name": "DirectoriesObjectPage",
-          "target": "DirectoriesObjectPage"
+          "target": [
+            "DirectoriesList",
+            "DirectoriesObjectPage"
+          ]
         },
         {
           "pattern": "Subaccounts({key}):?query:",
           "name": "SubaccountsObjectPage",
-          "target": "SubaccountsObjectPage"
+          "target": [
+            "DirectoriesList",
+            "DirectoriesObjectPage",
+            "SubaccountsObjectPage"
+          ]
         },
         {
           "pattern": "Directories({key})/subaccounts({subKey}):?query:",
@@ -214,5 +223,9 @@
   "sap.fiori": {
     "registrationIds": [],
     "archeType": "transactional"
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "btpmanagementapp.service"
   }
 }

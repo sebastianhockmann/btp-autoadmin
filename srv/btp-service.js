@@ -306,8 +306,7 @@ module.exports = cds.service.impl(async function () {
   const tx = cds.transaction(req);
 
   console.log(`${p} READ Users`);
-  const subGuid = await resolveSubaccountGuidFromReq(req, Subaccounts); // <- falls deine Funktion Subaccounts braucht
-
+  const subGuid = await resolveSubaccountGuidFromReq(req, Subaccounts);
   console.log(`${p} Users for subaccountGuid=`, subGuid);
 
   // Helper: CQN WHERE sauber erweitern
@@ -320,11 +319,10 @@ module.exports = cds.service.impl(async function () {
     }
   }
 
-  // ✅ Navigation: /Subaccounts(...)/users
   if (subGuid) {
     await refreshUsersForSubaccount(subGuid, req);
 
-    // ✅ NICHT req.query direkt verändern -> clone
+ 
     const q = JSON.parse(JSON.stringify(req.query));
 
     addWhereAnd(q, [{ ref: ['subaccountGuid'] }, '=', { val: subGuid }]);
@@ -332,7 +330,7 @@ module.exports = cds.service.impl(async function () {
     return tx.run(q);
   }
 
-  // ✅ Global users list: /Users -> einfach DB Query as-is
+
   return tx.run(req.query);
 });
 });
